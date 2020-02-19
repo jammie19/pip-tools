@@ -72,7 +72,7 @@ DEFAULT_REQUIREMENTS_FILE = "requirements.txt"
     help="Path to SSL client certificate, a single file containing "
     "the private key and the certificate in PEM format.",
 )
-@click.argument("src_files", required=False, type=click.Path(exists=True), nargs=-1)
+@click.argument("src_files", required=False, nargs=-1)
 def cli(
     ask,
     dry_run,
@@ -89,6 +89,15 @@ def cli(
     src_files,
 ):
     """Synchronize virtual environment with requirements.txt."""
+    try:
+        fwd_args_idx = src_files.index("--")
+    except ValueError:
+        install_flags = []
+    else:
+        install_flags = list(src_files[fwd_args_idx + 1 :])
+        src_files = src_files[:fwd_args_idx]
+    existing_path = click.Path(exists=True)
+    src_files = tuple(existing_path(sf) for sf in src_files)
     if not src_files:
         if os.path.exists(DEFAULT_REQUIREMENTS_FILE):
             src_files = (DEFAULT_REQUIREMENTS_FILE,)
@@ -129,16 +138,19 @@ def cli(
     installed_dists = get_installed_distributions(skip=[], user_only=user_only)
     to_install, to_uninstall = sync.diff(requirements, installed_dists)
 
-    install_flags = _compose_install_flags(
-        finder,
-        no_index=no_index,
-        index_url=index_url,
-        extra_index_url=extra_index_url,
-        trusted_host=trusted_host,
-        find_links=find_links,
-        user_only=user_only,
-        cert=cert,
-        client_cert=client_cert,
+    install_flags = (
+        _compose_install_flags(
+            finder,
+            no_index=no_index,
+            index_url=index_url,
+            extra_index_url=extra_index_url,
+            trusted_host=trusted_host,
+            find_links=find_links,
+            user_only=user_only,
+            cert=cert,
+            client_cert=client_cert,
+        )
+        + install_flags
     )
     sys.exit(
         sync.sync(

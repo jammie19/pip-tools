@@ -201,6 +201,16 @@ Or to output to standard output, use ``--output-file=-``:
     $ pip-compile --output-file=- > requirements.txt
     $ pip-compile - --output-file=- < requirements.in > requirements.txt
 
+Forwarding options to ``pip``
+-----------------------------
+
+Any flags or arguments following two standalone double-dashes (``-- --``)
+at the end of ``pip-compile``'s argument list are passed to ``pip``, e.g.
+
+.. code-block:: bash
+
+    $ pip-compile requirements.in -- -- --retries 10 --timeout 30
+
 Configuration
 -------------
 
@@ -367,6 +377,13 @@ line arguments, e.g.
     $ pip-sync dev-requirements.txt requirements.txt
 
 Passing in empty arguments would cause it to default to ``requirements.txt``.
+
+Any flags or arguments following two standalone double-dashes (``-- --``)
+at the end of ``pip-sync``'s argument list are passed to ``pip install``, e.g.
+
+.. code-block:: bash
+
+    $ pip-sync requirements.txt -- -- --no-cache-dir --no-deps
 
 If you use multiple Python versions, you can run ``pip-sync`` as
 ``py -X.Y -m piptools sync ...`` on Windows and

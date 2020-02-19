@@ -265,6 +265,16 @@ def test_force_text(value, expected_text):
         (["-f", "συνδέσεις"], "pip-compile --find-links='συνδέσεις'"),
         (["-o", "my file.txt"], "pip-compile --output-file='my file.txt'"),
         (["-o", "απαιτήσεις.txt"], "pip-compile --output-file='απαιτήσεις.txt'"),
+        # Check ' -- ' (filename escapes) and ' -- -- ' (forwarded) arguments
+        (["--", "--requirements.in"], "pip-compile -- --requirements.in"),
+        (
+            ["--", "--", "--disable-pip-version-check"],
+            "pip-compile -- -- --disable-pip-version-check",
+        ),
+        (
+            ["--", "--requirements.in", "--", "--disable-pip-version-check"],
+            "pip-compile -- --requirements.in -- --disable-pip-version-check",
+        ),
     ],
 )
 def test_get_compile_command(tmpdir_cwd, cli_args, expected_command):

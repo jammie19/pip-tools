@@ -317,7 +317,23 @@ def get_compile_command(click_ctx):
     compile_options = {option.name: option for option in cli.params}
 
     left_args = []
-    right_args = []
+
+    # Re-add click-stripped ' -- ' if necessary,
+    # and don't sort forwarded pip args
+    src_files = list(click_ctx.params["src_files"])
+    try:
+        fwd_args_idx = src_files.index("--")
+    except ValueError:
+        fwd_args = []
+    else:
+        fwd_args = list(src_files[fwd_args_idx:])
+        src_files = src_files[:fwd_args_idx]
+    src_files = sorted(shlex_quote(force_text(fname)) for fname in src_files)
+    if any(fname.startswith("-") for fname in src_files):
+        src_files.insert(0, "--")
+    elif fwd_args:
+        fwd_args.insert(0, "--")
+    right_args = src_files + fwd_args
 
     for option_name, value in click_ctx.params.items():
         option = compile_options[option_name]
@@ -328,7 +344,6 @@ def get_compile_command(click_ctx):
         # Collect variadic args separately, they will be added
         # at the end of the command later
         if option.nargs < 0:
-            right_args.extend([shlex_quote(force_text(val)) for val in value])
             continue
 
         # Exclude one-off options (--upgrade/--upgrade-package/--rebuild/...)
@@ -372,4 +387,4 @@ def get_compile_command(click_ctx):
                     )
                 )
 
-    return " ".join(["pip-compile"] + sorted(left_args) + sorted(right_args))
+    return " ".join(["pip-compile"] + sorted(left_args) + right_args)

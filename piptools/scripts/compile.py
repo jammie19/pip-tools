@@ -153,7 +153,7 @@ pip_defaults = install_command.parser.get_default_values()
     default=10,
     help="Maximum number of rounds before resolving the requirements aborts.",
 )
-@click.argument("src_files", nargs=-1, type=click.Path(exists=True, allow_dash=True))
+@click.argument("src_files", nargs=-1)
 @click.option(
     "--build-isolation/--no-build-isolation",
     is_flag=True,
@@ -208,6 +208,15 @@ def cli(
     """Compiles requirements.txt from requirements.in specs."""
     log.verbosity = verbose - quiet
 
+    try:
+        fwd_args_idx = src_files.index("--")
+    except ValueError:
+        pip_args = []
+    else:
+        pip_args = list(src_files[fwd_args_idx + 1 :])
+        src_files = src_files[:fwd_args_idx]
+    existing_path_or_stdin = click.Path(exists=True, allow_dash=True)
+    src_files = tuple(existing_path_or_stdin(sf) for sf in src_files)
     if len(src_files) == 0:
         if os.path.exists(DEFAULT_REQUIREMENTS_FILE):
             src_files = (DEFAULT_REQUIREMENTS_FILE,)
@@ -247,7 +256,6 @@ def cli(
     # Setup
     ###
 
-    pip_args = []
     if find_links:
         for link in find_links:
             pip_args.extend(["-f", link])
