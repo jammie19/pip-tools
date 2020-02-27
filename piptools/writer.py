@@ -44,7 +44,7 @@ strip_comes_from_line_re = re.compile(r" \(line \d+\)$")
 
 def _comes_from_as_string(ireq):
     if isinstance(ireq.comes_from, six.string_types):
-        return strip_comes_from_line_re.sub("", ireq.comes_from)
+        return ireq.comes_from
     return key_from_ireq(ireq.comes_from)
 
 
@@ -230,6 +230,15 @@ class OutputWriter(object):
         elif ireq.comes_from:
             required_by.add(_comes_from_as_string(ireq))
         if required_by:
+            stripped_srcs = [
+                strip_comes_from_line_re.sub("", src) for src in required_by
+            ]
+            required_by = set(stripped_srcs)
+            duplicated_srcs = set(
+                src for src in required_by if stripped_srcs.count(src) > 1
+            )
+            if duplicated_srcs:
+                print(f"Warning: {ireq.name=} {duplicated_srcs=}")
             annotation = ", ".join(sorted(required_by))
             line = "{:24}{}{}".format(
                 line,
