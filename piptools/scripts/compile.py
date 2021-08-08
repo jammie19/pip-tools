@@ -26,6 +26,7 @@ from ..utils import (
     drop_extras,
     is_pinned_requirement,
     key_from_ireq,
+    working_dir,
 )
 from ..writer import OutputWriter
 
@@ -159,6 +160,15 @@ def _get_default_option(option_name: str) -> Any:
     ),
 )
 @click.option(
+    "--read-relative-to-input",
+    is_flag=True,
+    default=False,
+    help=(
+        "Resolve relative paths as relative to the input file's parent. "
+        "Will be resolved as relative to the current folder otherwise."
+    ),
+)
+@click.option(
     "--allow-unsafe/--no-allow-unsafe",
     is_flag=True,
     default=False,
@@ -257,6 +267,7 @@ def cli(
     upgrade_packages: Tuple[str, ...],
     output_file: Union[LazyFile, IO[Any], None],
     write_relative_to_output: bool,
+    read_relative_to_input: bool,
     allow_unsafe: bool,
     strip_extras: bool,
     generate_hashes: bool,
@@ -394,8 +405,7 @@ def cli(
         if src_file == "-":
             # pip requires filenames and not files. Since we want to support
             # piping from stdin, we need to briefly save the input from stdin
-            # to a temporary file and have pip read that.  also used for
-            # reading requirements from install_requires in setup.py.
+            # to a temporary file and have pip read that.
             tmpfile = tempfile.NamedTemporaryFile(mode="wt", delete=False)
             tmpfile.write(sys.stdin.read())
             comes_from = "-r -"
@@ -413,14 +423,20 @@ def cli(
             constraints.extend(reqs)
         elif is_setup_file:
             setup_file_found = True
-            dist = meta.load(os.path.dirname(os.path.abspath(src_file)))
-            comes_from = f"{dist.metadata.get_all('Name')[0]} ({src_file})"
-            constraints.extend(
-                [
-                    install_req_from_line(req, comes_from=comes_from)
-                    for req in dist.requires or []
-                ]
-            )
+            dist = meta.load(os.path.dirname(src_file))
+            with working_dir(os.path.dirname(os.path.abspath(output_file.name))):
+                comes_from = (
+                    f"{dist.metadata.get_all('Name')[0]} ({os.path.relpath(src_file)})"
+                )
+            with working_dir(
+                os.path.dirname(src_file) if read_relative_to_input else None
+            ):
+                constraints.extend(
+                    [
+                        install_req_from_line(req, comes_from=comes_from)
+                        for req in dist.requires or []
+                    ]
+                )
         else:
             constraints.extend(
                 parse_requirements(
@@ -428,6 +444,9 @@ def cli(
                     finder=repository.finder,
                     session=repository.session,
                     options=repository.options,
+                    from_dir=(
+                        os.path.dirname(src_file) if read_relative_to_input else None
+                    ),
                 )
             )
 
