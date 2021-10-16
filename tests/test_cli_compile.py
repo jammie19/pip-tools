@@ -826,7 +826,7 @@ def test_generate_hashes_with_editable(pip_conf, runner):
     small_fake_package_dir = os.path.join(PACKAGES_PATH, "small_fake_with_deps")
     small_fake_package_url = path_to_url(small_fake_package_dir)
     with open("requirements.in", "w") as fp:
-        fp.write(f"-e {small_fake_package_url}\n")
+        fp.write(f"-e {small_fake_package_url}")
     out = runner.invoke(cli, ["--no-annotate", "--generate-hashes"])
     expected = (
         "-e {}\n"
@@ -846,7 +846,7 @@ def test_generate_hashes_with_url(runner):
     with open("requirements.in", "w") as fp:
         fp.write(
             "https://github.com/jazzband/pip-tools/archive/"
-            "7d86c8d3ecd1faa6be11c7ddc6b29a30ffd1dae3.zip#egg=pip-tools\n"
+            "7d86c8d3ecd1faa6be11c7ddc6b29a30ffd1dae3.zip#egg=pip-tools"
         )
     out = runner.invoke(cli, ["--no-annotate", "--generate-hashes"])
     expected = (
@@ -986,7 +986,9 @@ def test_generate_hashes_with_split_style_annotations(runner):
         fp.write("pytz==2020.4\n")
         fp.write("sqlparse==0.3.1\n")
 
-    out = runner.invoke(cli, ["--generate-hashes", "--annotation-style", "split"])
+    out = runner.invoke(
+        cli, ["--generate-hashes", "--annotation-style", "split", "--newline=LF"]
+    )
     assert out.stderr == dedent(
         f"""\
         #
@@ -994,7 +996,7 @@ def test_generate_hashes_with_split_style_annotations(runner):
 {sys.version_info.major}.{sys.version_info.minor}
         # To update, run:
         #
-        #    pip-compile --generate-hashes
+        #    pip-compile --generate-hashes --newline=LF
         #
         django==1.11.29 \\
             --hash=sha256:014e3392058d94f40569206a24523ce254d55ad2f9f46c6550b0fe2e4f94cf3f \\
@@ -1042,7 +1044,9 @@ def test_generate_hashes_with_line_style_annotations(runner):
         fp.write("pytz==2020.4\n")
         fp.write("sqlparse==0.3.1\n")
 
-    out = runner.invoke(cli, ["--generate-hashes", "--annotation-style", "line"])
+    out = runner.invoke(
+        cli, ["--generate-hashes", "--annotation-style", "line", "--newline=LF"]
+    )
     assert out.stderr == dedent(
         f"""\
         #
@@ -1050,7 +1054,7 @@ def test_generate_hashes_with_line_style_annotations(runner):
 {sys.version_info.major}.{sys.version_info.minor}
         # To update, run:
         #
-        #    pip-compile --annotation-style=line --generate-hashes
+        #    pip-compile --annotation-style=line --generate-hashes --newline=LF
         #
         django==1.11.29 \\
             --hash=sha256:014e3392058d94f40569206a24523ce254d55ad2f9f46c6550b0fe2e4f94cf3f \\
@@ -1222,7 +1226,7 @@ def test_multiple_input_files_without_output_file(runner):
 {sys.version_info.major}.{sys.version_info.minor}
             # To update, run:
             #
-            #    pip-compile --no-emit-find-links
+            #    pip-compile --newline=LF --no-emit-find-links
             #
             small-fake-a==0.1
                 # via
@@ -1242,7 +1246,7 @@ def test_multiple_input_files_without_output_file(runner):
 {sys.version_info.major}.{sys.version_info.minor}
             # To update, run:
             #
-            #    pip-compile --annotation-style=line --no-emit-find-links
+            #    pip-compile --annotation-style=line --newline=LF --no-emit-find-links
             #
             small-fake-a==0.1         # via -c constraints.txt, small-fake-with-deps
             small-fake-with-deps==0.1  # via -r requirements.in
@@ -1258,7 +1262,7 @@ def test_multiple_input_files_without_output_file(runner):
 {sys.version_info.major}.{sys.version_info.minor}
             # To update, run:
             #
-            #    pip-compile --no-annotate --no-emit-find-links
+            #    pip-compile --newline=LF --no-annotate --no-emit-find-links
             #
             small-fake-a==0.1
             small-fake-with-deps==0.1
@@ -1278,7 +1282,7 @@ def test_annotate_option(pip_conf, runner, options, expected):
         req_in.write("-c constraints.txt\n")
         req_in.write("small_fake_with_deps")
 
-    out = runner.invoke(cli, [*options, "-n", "--no-emit-find-links"])
+    out = runner.invoke(cli, [*options, "-n", "--no-emit-find-links", "--newline=LF"])
 
     assert out.stderr == dedent(expected)
     assert out.exit_code == 0
