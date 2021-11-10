@@ -8,7 +8,7 @@ from pip._internal.req import InstallRequirement
 from pip._internal.utils.hashes import FAVORITE_HASH
 from pip._vendor.requests import Session
 
-from piptools.utils import as_tuple, key_from_ireq, make_install_requirement
+from piptools.utils import key_from_ireq
 
 from ..exceptions import NoCandidateFound
 from .base import BaseRepository
@@ -72,12 +72,9 @@ class LocalRequirementsRepository(BaseRepository):
         existing_pin = self.existing_pins.get(key)
         if existing_pin and ireq_satisfied_by_existing_pin(ireq, existing_pin):
             try:
-                self.repository.find_best_match(existing_pin, prereleases)
+                return self.repository.find_best_match(existing_pin, prereleases)
             except NoCandidateFound:
                 return self.repository.find_best_match(ireq, prereleases)
-            else:
-                project, version, _ = as_tuple(existing_pin)
-                return make_install_requirement(project, version, ireq)
         else:
             return self.repository.find_best_match(ireq, prereleases)
 
