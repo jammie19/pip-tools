@@ -1,5 +1,5 @@
 import optparse
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from typing import Iterator, Mapping, Optional, Set, cast
 
 from pip._internal.index.package_finder import PackageFinder
@@ -71,12 +71,9 @@ class LocalRequirementsRepository(BaseRepository):
         key = key_from_ireq(ireq)
         existing_pin = self.existing_pins.get(key)
         if existing_pin and ireq_satisfied_by_existing_pin(ireq, existing_pin):
-            try:
+            with suppress(NoCandidateFound):
                 return self.repository.find_best_match(existing_pin, prereleases)
-            except NoCandidateFound:
-                return self.repository.find_best_match(ireq, prereleases)
-        else:
-            return self.repository.find_best_match(ireq, prereleases)
+        return self.repository.find_best_match(ireq, prereleases)
 
     def get_dependencies(self, ireq: InstallRequirement) -> Set[InstallRequirement]:
         return self.repository.get_dependencies(ireq)
