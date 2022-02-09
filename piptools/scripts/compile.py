@@ -451,9 +451,8 @@ def cli(
         key_from_ireq(ireq) for ireq in constraints if not ireq.constraint
     }
 
-    allowed_upgrades = primary_packages | existing_pins_to_upgrade
     constraints.extend(
-        ireq for key, ireq in upgrade_install_reqs.items() if key in allowed_upgrades
+        ireq for key, ireq in upgrade_install_reqs.items() if key in primary_packages
     )
 
     constraints = [req for req in constraints if req.match_markers(extras)]
