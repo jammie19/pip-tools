@@ -424,7 +424,7 @@ def cli(
             )
 
     if upgrade_packages:
-        constraints_file = tempfile.NamedTemporaryFile(mode="wt")
+        constraints_file = tempfile.NamedTemporaryFile(mode="wt", delete=False)
         constraints_file.write("\n".join(upgrade_packages))
         constraints_file.flush()
         reqs = list(
@@ -436,7 +436,6 @@ def cli(
                 constraint=True,
             )
         )
-        constraints_file.close()
         for req in reqs:
             req.comes_from = None
             # req.comes_from = f"--upgrade-package {req.name}{req.specifier}"
